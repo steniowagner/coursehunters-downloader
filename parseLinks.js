@@ -51,7 +51,7 @@ const parseItemsLinks = pageBody => {
     .each((index, element) => {
       const rawTitlte = $(element).text();
       const firstBlankIndex = rawTitlte.indexOf(' ');
-      const title = rawTitlte.substring(firstBlankIndex + 1, rawTitlte.length);
+      let title = rawTitlte.substring(firstBlankIndex + 1, rawTitlte.length);
 
       if (process.platform === 'win32') {
         title = handleWindowsFilename(title);
