@@ -2,9 +2,11 @@ const https = require('https');
 const fs = require('fs');
 
 const { getLinksFromSourcePage } = require('./parseLinks');
-const MAX_NUMBER_DOWNLOADS = 3;
 
-const url = 'https://coursehunters.net/course/osnovy-yazyka-programmirovaniya-c';
+const MAX_NUMBER_DOWNLOADS = 3;
+const MAX_TIMEOUT = 3;
+
+const url = 'https://coursehunters.net/course/webpack-plaginy';
 
 const downloadVideo = itemToDownload => {
   const { url, title } = itemToDownload;
@@ -55,7 +57,7 @@ getLinksFromSourcePage(url).then(links => {
 
     console.log();
 
-    setTimeout(start, 1000 * 60 * 3);
+    setTimeout(start, 1000 * 60 * MAX_TIMEOUT);
   }
 
   start();
