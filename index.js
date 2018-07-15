@@ -6,7 +6,7 @@ const { getLinksFromSourcePage } = require('./parseLinks');
 const MAX_NUMBER_DOWNLOADS = 3;
 const MAX_TIMEOUT = 3;
 
-const url = 'https://coursehunters.net/course/webpack-plaginy';
+const url = 'https://coursehunters.net/course/javascript-i-react-dlya-razrabotchikov-osvoyte-osnovnye-funkcii';
 
 const downloadVideo = itemToDownload => {
   const { url, title } = itemToDownload;

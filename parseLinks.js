@@ -20,6 +20,28 @@ const getLinksFromSourcePage = url => {
   });
 }
 
+const handleWindowsFilename = title => {
+  const isSpecialWindowsChar = character => {
+    const value = character.charCodeAt(0) === 47 ||
+      character.charCodeAt(0) === 34 ||
+      character.charCodeAt(0) === 124 ||
+      character.charCodeAt(0) === 58 ||
+      character.charCodeAt(0) === 42 ||
+      character.charCodeAt(0) === 60 ||
+      character.charCodeAt(0) === 62 ||
+      character.charCodeAt(0) === 34 ||
+      character.charCodeAt(0) === 92 ||
+      character.charCodeAt(0) === 63;
+
+    return value;
+  }
+
+  title = title.split('')
+    .filter(character => !isSpecialWindowsChar(character)).join('');
+
+  return title;
+}
+
 const parseItemsLinks = pageBody => {
   const $ = cheerio.load(pageBody);
   const titles = [];
@@ -30,6 +52,10 @@ const parseItemsLinks = pageBody => {
       const rawTitlte = $(element).text();
       const firstBlankIndex = rawTitlte.indexOf(' ');
       const title = rawTitlte.substring(firstBlankIndex + 1, rawTitlte.length);
+
+      if (process.platform === 'win32') {
+        title = handleWindowsFilename(title);
+      }
 
       titles.push(title);
     });
