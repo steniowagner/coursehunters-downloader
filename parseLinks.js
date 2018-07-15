@@ -4,6 +4,8 @@ const https = require('https');
 const getLinksFromSourcePage = url => {
   let pageBody = '';
 
+  console.log('\n>> Getting Links from Source Page');
+
   return new Promise(resolve => {
     https.get(url, res => {
       res.on('data', chunk => {
@@ -11,6 +13,7 @@ const getLinksFromSourcePage = url => {
       });
 
       res.on('end', () => {
+        console.log('>> DONE!');
         resolve(parseItemsLinks(pageBody));
       });
     });
