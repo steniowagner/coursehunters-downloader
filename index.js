@@ -1,15 +1,17 @@
 const https = require('https');
 const fs = require('fs');
 
+const EventEmitter = require('events');
+const emitter = new EventEmitter();
+
 const { getLinksFromSourcePage } = require('./parseLinks');
 
-const MAX_NUMBER_DOWNLOADS = 3;
-const MAX_TIMEOUT = 3;
+const MAX_NUMBER_DOWNLOADS = 1;
 
-const url = 'https://coursehunters.net/course/javascript-i-react-dlya-razrabotchikov-osvoyte-osnovnye-funkcii';
+const courseURL = 'https://coursehunters.net/course/sozdayte-12-faktornoe-prilozhenie-na-node-js-s-pomoshchyu-docker';
 
-const downloadVideo = itemToDownload => {
-  const { url, title } = itemToDownload;
+const downloadVideo = video => {
+  const { url, title } = video;
 
   const directoryName = process.platform === 'win32' ? '\\videos\\' : '/videos/';
   const destination = __dirname + directoryName + title + '.mp4';
@@ -17,16 +19,15 @@ const downloadVideo = itemToDownload => {
   const file = fs.createWriteStream(destination);
 
   https.get(url, res => {
-    console.log(`> Download of the video '${title}' started!`);
-
+    emitter.emit('started', title);
     res.pipe(file);
-
     file.on('finish', () => {
-      console.log(`>> Video '${title}' downloaded!`);
       file.close();
+      emitter.emit('finished', title);
+      emitter.emit('slotAvailable');
     });
   }).on('error', err => {
-    console.log('- OH, NO! SOMETHING GETS WRONG!', err);
+    emitter.emit('error', err);
     fs.unlink(destination);
   });
 }
@@ -35,30 +36,29 @@ if (!fs.existsSync('./videos')) {
   fs.mkdirSync('./videos');
 }
 
-getLinksFromSourcePage(url).then(links => {
-  const start = () => {
-    if (links.length === 0) {
-      return;
+getLinksFromSourcePage(courseURL).then(links => {
+  let firstItems = links.splice(0, MAX_NUMBER_DOWNLOADS);
+
+  emitter.on('started', title => {
+    console.log(`> Download of the video '${title}' started!`);
+  });
+
+  emitter.on('finished', title => {
+    console.log(`> Video '${title}' downloaded!`);
+  });
+
+  emitter.on('error', err => {
+    console.log('> OH, NO! SOMETHING GETS WRONG!', err);
+  });
+
+  firstItems.forEach(element => {
+    downloadVideo(element, 1);
+  });
+
+  emitter.on('slotAvailable', () => {
+    if (links.length > 0) {
+      const video = links.splice(0, 1)[0];
+      downloadVideo(video);
     }
-
-    let items = [];
-
-    for (let i = 0; i < MAX_NUMBER_DOWNLOADS; i++) {
-      if (i < links.length) {
-        items.push(links.splice(i, 1));
-      }
-    }
-
-    items = items.filter(element => element.length > 0);
-
-    items.forEach(link => {
-      downloadVideo(link[0]);
-    });
-
-    console.log();
-
-    setTimeout(start, 1000 * 60 * MAX_TIMEOUT);
-  }
-
-  start();
+  });
 });
