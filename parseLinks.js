@@ -13,7 +13,7 @@ const getLinksFromSourcePage = url => {
       });
 
       res.on('end', () => {
-        console.log('>> DONE!');
+        console.log('>> DONE!\n');
         resolve(parseItemsLinks(pageBody));
       });
     });
@@ -69,10 +69,20 @@ const parseItemsLinks = pageBody => {
       }
     });
 
-  return titles.map((title, index) => ({
+  let courseTitle = $('.original-name').text();
+  if (process.platform === 'win32') {
+    courseTitle = handleWindowsFilename(courseTitle);
+  }
+
+  const lessons = titles.map((title, index) => ({
     url: urls[index],
     title,
   }));
+
+  return {
+    courseTitle,
+    lessons,
+  };
 }
 
 module.exports = {

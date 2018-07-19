@@ -6,15 +6,19 @@ const emitter = new EventEmitter();
 
 const { getLinksFromSourcePage } = require('./parseLinks');
 
-const MAX_NUMBER_DOWNLOADS = 1;
+const MAX_NUMBER_DOWNLOADS = 3;
 
 const courseURL = 'https://coursehunters.net/course/sozdayte-12-faktornoe-prilozhenie-na-node-js-s-pomoshchyu-docker';
 
-const downloadVideo = video => {
-  const { url, title } = video;
+const getDestinationPath = (lessonTitle, courseTitle) => {
+  const directoryName = process.platform === 'win32' ? `\\${courseTitle}\\` : `/${courseTitle}/`;
+  const destination = __dirname + directoryName + lessonTitle + '.mp4';
 
-  const directoryName = process.platform === 'win32' ? '\\videos\\' : '/videos/';
-  const destination = __dirname + directoryName + title + '.mp4';
+  return destination;
+}
+
+const downloadVideo = (video, destination) => {
+  const { url, title } = video;
 
   const file = fs.createWriteStream(destination);
 
@@ -32,33 +36,40 @@ const downloadVideo = video => {
   });
 }
 
-if (!fs.existsSync('./videos')) {
-  fs.mkdirSync('./videos');
+startDownload = (lesson, courseTitle) => {
+  const destinationPath = getDestinationPath(lesson.title, courseTitle);
+  downloadVideo(lesson, destinationPath);
 }
 
-getLinksFromSourcePage(courseURL).then(links => {
-  let firstItems = links.splice(0, MAX_NUMBER_DOWNLOADS);
+getLinksFromSourcePage(courseURL).then(courseInfo => {
+  const { lessons, courseTitle } = courseInfo;
+
+  let firstItems = lessons.splice(0, MAX_NUMBER_DOWNLOADS);
+
+  if (!fs.existsSync(`./${courseTitle}`)) {
+    fs.mkdirSync(`./${courseTitle}`);
+  }
 
   emitter.on('started', title => {
-    console.log(`> Download of the video '${title}' started!`);
+    console.log(`> Starting Download of the lesson '${title}'!`);
   });
 
   emitter.on('finished', title => {
-    console.log(`> Video '${title}' downloaded!`);
+    console.log(`> Finishing Download of the lesson '${title}'!`);
   });
 
   emitter.on('error', err => {
     console.log('> OH, NO! SOMETHING GETS WRONG!', err);
   });
 
-  firstItems.forEach(element => {
-    downloadVideo(element, 1);
+  firstItems.forEach(lesson => {
+    startDownload(lesson, courseTitle);
   });
 
   emitter.on('slotAvailable', () => {
-    if (links.length > 0) {
-      const video = links.splice(0, 1)[0];
-      downloadVideo(video);
+    if (lessons.length > 0) {
+      const lesson = lessons.splice(0, 1)[0];
+      startDownload(lesson, courseTitle);
     }
   });
 });
